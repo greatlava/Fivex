@@ -1,0 +1,55 @@
+version: '3.9'
+
+networks:
+  fivex-net:
+    driver: bridge
+
+volumes:
+  mongo-data:
+    name: fivex-mongo-data
+  redis-data:
+    name: fivex-redis-data
+
+services:
+  # ── MongoDB ────────────────────────────────────────────────
+  fivex-mongo:
+    build:
+      context: ./mongo
+    container_name: fivex-mongo
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: root123
+      MONGO_INITDB_DATABASE: fivex
+    volumes:
+      - mongo-data:/data/db
+      - ./mongo/logs:/home/fivex/mongo/logs
+    ports:
+      - "27017:27017"
+    networks:
+      - fivex-net
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # ── Redis ──────────────────────────────────────────────────
+  fivex-redis:
+    build:
+      context: ./redis
+    container_name: fivex-redis
+    restart: unless-stopped
+    volumes:
+      - redis-data:/home/fivex/redis/data
+    ports:
+      - "6379:6379"
+    networks:
+      - fivex-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
