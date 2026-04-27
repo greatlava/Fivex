@@ -23,6 +23,7 @@ router.get('/status', async (req, res) => {
     
     res.json(status);
   } catch (error) {
+    console.error('[TEST] 获取连接状态失败:', error);
     res.status(500).json({
       error: '获取连接状态失败',
       message: error.message
@@ -43,12 +44,14 @@ router.get('/mongo-test', async (req, res) => {
     const result = await testCollection.findOne({ test: 'success' });
     await testCollection.deleteMany({ test: 'success' });
     
+    console.log('[TEST] MongoDB 读写测试成功');
     res.json({
       success: true,
       message: 'MongoDB 读写测试成功',
       data: result
     });
   } catch (error) {
+    console.error('[TEST] MongoDB 测试失败:', error);
     res.status(500).json({
       success: false,
       message: 'MongoDB 测试失败',
@@ -61,13 +64,16 @@ router.get('/redis-test', async (req, res) => {
   try {
     const client = redisClient.getClient();
     
-    await client.set('test:key', 'success', {
-      EX: 60
-    });
+    if (!client) {
+      throw new Error('Redis 客户端未初始化');
+    }
+    
+    await client.set('test:key', 'success', 'EX', 60);
     
     const value = await client.get('test:key');
     await client.del('test:key');
     
+    console.log('[TEST] Redis 读写测试成功');
     res.json({
       success: true,
       message: 'Redis 读写测试成功',
@@ -77,6 +83,7 @@ router.get('/redis-test', async (req, res) => {
       }
     });
   } catch (error) {
+    console.error('[TEST] Redis 测试失败:', error);
     res.status(500).json({
       success: false,
       message: 'Redis 测试失败',
