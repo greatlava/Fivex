@@ -9,6 +9,10 @@ node_modules/
 dist/
 build/
 
+# Vite 缓存
+.vite/
+**/.vite/
+
 # 日志文件
 *.log
 npm-debug.log*
