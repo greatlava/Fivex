@@ -1,10 +1,16 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import Lobby from '../views/Lobby.vue'
 import TestPage from '../views/Test.vue'
 
 const routes = [
   {
     path: '/',
-    redirect: '/test'
+    redirect: '/lobby'
+  },
+  {
+    path: '/lobby',
+    name: 'Lobby',
+    component: Lobby
   },
   {
     path: '/test',

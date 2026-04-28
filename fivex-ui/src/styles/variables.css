@@ -1,0 +1,57 @@
+:root {
+  --bg-page:        #F5F0E8;
+  --bg-main:        #FAF8F4;
+  --bg-sidebar:     #EDE5D8;
+  --bg-titlebar:    #F0EBE2;
+  --bg-topbar:      #EDE5D8;
+  --bg-card:        #FFFFFF;
+  --bg-card-empty:  #F0EBE2;
+  --bg-rp:          #E8E0D4;
+
+  --accent:         #E07840;
+  --accent-light:   #C87040;
+  --accent-btn:     #D4BBA6;
+  --accent-btn-txt: #3A2C1E;
+
+  --border-card:    #E8DDD0;
+  --border-empty:   #DDD0C0;
+  --border-sidebar: #D8CFC0;
+
+  --txt-primary:    #1A1A1A;
+  --txt-secondary:  #806858;
+  --txt-muted:      #9A8878;
+  --txt-faint:      #C8BFB0;
+  --txt-number:     #E07840;
+
+  --vip-bg:         #E07840;
+  --online-dot:     #7AB870;
+  --dark-card-bg:   #5A4030;
+
+  --color-success: #66BB6A;
+  --color-info: #42A5F5;
+  --color-warning: #FFB74D;
+  --color-error: #EF5350;
+  --color-online: #7AB870;
+  --color-offline: #BDBDBD;
+  
+  --shadow-sm: 0 1px 3px rgba(26, 26, 26, 0.05);
+  --shadow-md: 0 2px 8px rgba(26, 26, 26, 0.06);
+  --shadow-lg: 0 4px 16px rgba(26, 26, 26, 0.08);
+
+  --radius-sm: 3px;
+  --radius-md: 5px;
+  --radius-lg: 10px;
+  --radius-full: 9999px;
+
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.3s ease;
+  --transition-slow: 0.5s ease;
+
+  --z-dropdown: 1000;
+  --z-sticky: 1100;
+  --z-fixed: 1200;
+  --z-modal-backdrop: 1400;
+  --z-modal: 1500;
+  --z-popover: 1600;
+  --z-tooltip: 1700;
+}

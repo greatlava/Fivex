@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 60" width="120" height="60">
+  <defs>
+    <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#A67C52"/>
+      <stop offset="100%" style="stop-color:#8B6842"/>
+    </linearGradient>
+  </defs>
+  <rect x="5" y="5" width="110" height="50" rx="8" ry="8" fill="url(#logoGrad)"/>
+  <rect x="15" y="12" width="40" height="36" rx="2" ry="2" fill="#F5EDE0"/>
+  <line x1="25" y1="12" x2="25" y2="48" stroke="#D4C4A8" stroke-width="1"/>
+  <line x1="35" y1="12" x2="35" y2="48" stroke="#D4C4A8" stroke-width="1"/>
+  <line x1="45" y1="12" x2="45" y2="48" stroke="#D4C4A8" stroke-width="1"/>
+  <line x1="15" y1="21" x2="55" y2="21" stroke="#D4C4A8" stroke-width="1"/>
+  <line x1="15" y1="30" x2="55" y2="30" stroke="#D4C4A8" stroke-width="1"/>
+  <line x1="15" y1="39" x2="55" y2="39" stroke="#D4C4A8" stroke-width="1"/>
+  <circle cx="25" cy="21" r="3" fill="#5D4037"/>
+  <circle cx="45" cy="39" r="3" fill="#F5EDE0" stroke="#C4B494" stroke-width="1"/>
+  <text x="80" y="35" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#F5EDE0">五子棋</text>
+  <text x="80" y="48" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#E8DCC8">Fivex</text>
+</svg>
