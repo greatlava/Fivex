@@ -1,7 +1,7 @@
 <template>
   <Teleport to="body">
     <Transition name="modal">
-      <div v-if="visible" class="modal-overlay" @click.self="handleOverlayClick">
+      <div v-if="visible" class="modal-overlay">
         <div class="modal-container" @click.stop>
           <div class="modal-header">
             <div class="modal-tabs">
@@ -118,32 +118,6 @@
                 </div>
                 
                 <div class="form-group">
-                  <label class="form-label">确认密码</label>
-                  <div class="input-wrapper">
-                    <input 
-                      v-model="registerForm.confirmPassword"
-                      :type="showConfirmPassword ? 'text' : 'password'"
-                      class="form-input"
-                      placeholder="请再次输入密码"
-                      autocomplete="new-password"
-                    />
-                    <button 
-                      type="button" 
-                      class="password-toggle"
-                      @click="showConfirmPassword = !showConfirmPassword"
-                    >
-                      <svg v-if="!showConfirmPassword" viewBox="0 0 24 24" width="18" height="18">
-                        <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" fill="currentColor"/>
-                      </svg>
-                      <svg v-else viewBox="0 0 24 24" width="18" height="18">
-                        <path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.16c0-1.66-1.34-3-3-3l-.17.01z" fill="currentColor"/>
-                      </svg>
-                    </button>
-                  </div>
-                  <div class="form-tip" v-if="confirmPasswordError">{{ confirmPasswordError }}</div>
-                </div>
-                
-                <div class="form-group">
                   <label class="form-label">选择头像</label>
                   <AvatarSelector v-model="registerForm.avatar" />
                 </div>
@@ -220,12 +194,10 @@ const errorMessage = ref('')
 
 const showLoginPassword = ref(false)
 const showRegisterPassword = ref(false)
-const showConfirmPassword = ref(false)
 
 const usernameError = ref('')
 const nicknameError = ref('')
 const passwordError = ref('')
-const confirmPasswordError = ref('')
 const captchaError = ref('')
 
 const loginForm = ref({
@@ -237,7 +209,6 @@ const registerForm = ref({
   username: '',
   nickname: '',
   password: '',
-  confirmPassword: '',
   avatar: 'avatar-1'
 })
 
@@ -274,7 +245,6 @@ const clearErrors = () => {
   usernameError.value = ''
   nicknameError.value = ''
   passwordError.value = ''
-  confirmPasswordError.value = ''
   captchaError.value = ''
 }
 
@@ -284,7 +254,6 @@ const resetForm = () => {
     username: '',
     nickname: '',
     password: '',
-    confirmPassword: '',
     avatar: 'avatar-1'
   }
   captchaData.value = { captchaId: null, isVerified: false }
@@ -292,7 +261,6 @@ const resetForm = () => {
   clearErrors()
   showLoginPassword.value = false
   showRegisterPassword.value = false
-  showConfirmPassword.value = false
 }
 
 const validateRegisterForm = () => {
@@ -320,14 +288,6 @@ const validateRegisterForm = () => {
     isValid = false
   } else if (registerForm.value.password.length < 6) {
     passwordError.value = '密码长度不能少于 6 个字符'
-    isValid = false
-  }
-  
-  if (!registerForm.value.confirmPassword) {
-    confirmPasswordError.value = '请确认密码'
-    isValid = false
-  } else if (registerForm.value.confirmPassword !== registerForm.value.password) {
-    confirmPasswordError.value = '两次输入的密码不一致'
     isValid = false
   }
   
@@ -395,6 +355,10 @@ const handleLogin = async () => {
   }
 }
 
+const resetCaptcha = () => {
+  captchaData.value = { captchaId: null, isVerified: false }
+}
+
 const handleRegister = async () => {
   isSubmitting.value = true
   
@@ -419,6 +383,7 @@ const handleRegister = async () => {
       emit('update:visible', false)
     } else {
       errorMessage.value = result.message || '注册失败'
+      resetCaptcha()
     }
   } catch (error) {
     console.error('[AuthModal] 注册错误:', error)
@@ -427,6 +392,7 @@ const handleRegister = async () => {
     } else {
       errorMessage.value = '注册失败，请稍后重试'
     }
+    resetCaptcha()
   } finally {
     isSubmitting.value = false
   }
@@ -434,10 +400,6 @@ const handleRegister = async () => {
 
 const close = () => {
   emit('update:visible', false)
-}
-
-const handleOverlayClick = () => {
-  close()
 }
 </script>
 

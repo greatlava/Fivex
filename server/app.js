@@ -6,6 +6,7 @@ const cors = require('cors');
 const mongoClient = require('./config/mongodb');
 const redisClient = require('./config/redis');
 const socketAuthMiddleware = require('./middlewares/socketAuth');
+const { ensureDbConnection } = require('./middlewares/dbConnection');
 
 const app = express();
 const server = http.createServer(app);
@@ -14,7 +15,7 @@ app.use(cors());
 app.use(express.json());
 
 app.use('/api/test', require('./routes/test'));
-app.use('/api/auth', require('./routes/auth'));
+app.use('/api/auth', ensureDbConnection, require('./routes/auth'));
 
 const io = new Server(server, {
   cors: {
