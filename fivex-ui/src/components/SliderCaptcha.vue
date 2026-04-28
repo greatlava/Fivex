@@ -139,7 +139,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 
 const emit = defineEmits(['verify', 'update:modelValue'])
 
@@ -412,6 +412,20 @@ const handleVerifyFail = () => {
     }
   }, 1200)
 }
+
+watch(
+  () => props.modelValue,
+  (newValue) => {
+    if (newValue && newValue.isVerified === false) {
+      isVerified.value = false
+      captchaId.value = null
+      isSuccess.value = false
+      isFail.value = false
+      resetState()
+    }
+  },
+  { deep: true }
+)
 
 onMounted(() => {
   document.addEventListener('mousemove', handleMouseMove)
