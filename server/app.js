@@ -14,8 +14,21 @@ const server = http.createServer(app);
 app.use(cors());
 app.use(express.json());
 
+//数据连接白名单，不检查连接状态的路由
+const dbConnectionWhitelist = new Set([
+  '/api/auth/captcha/generate',
+  '/api/auth/captcha/verify',
+]);
+
+app.use('/api', (req, res, next) => {
+  if (dbConnectionWhitelist.has(req.originalUrl.split('?')[0])) {
+    return next();
+  }
+  return ensureDbConnection(req, res, next);
+});
+
 app.use('/api/test', require('./routes/test'));
-app.use('/api/auth', ensureDbConnection, require('./routes/auth'));
+app.use('/api/auth', require('./routes/auth'));
 
 const io = new Server(server, {
   cors: {
@@ -64,22 +77,26 @@ process.on('uncaughtException', (error) => {
 const PORT = process.env.PORT || 8080;
 
 async function startServer() {
+  console.log('[SERVER] starting...');
+
   try {
-    console.log('[SERVER] 正在启动服务器...');
-    
     await mongoClient.connect();
-    console.log('[SERVER] MongoDB 连接成功');
-    
-    await redisClient.connect();
-    console.log('[SERVER] Redis 连接成功');
-    
-    server.listen(PORT, () => {
-      console.log(`[SERVER] 服务器运行在 http://localhost:${PORT}`);
-    });
+    console.log('[SERVER] MongoDB connected');
   } catch (error) {
-    console.error('[SERVER] 启动服务器失败:', error);
-    process.exit(1);
+    console.error('[SERVER] MongoDB unavailable at startup:', error.message);
+    console.error('[SERVER] API server will keep running and retry MongoDB on database requests.');
   }
+
+  try {
+    await redisClient.connect();
+    console.log('[SERVER] Redis connected');
+  } catch (error) {
+    console.error('[SERVER] Redis unavailable at startup:', error.message);
+  }
+
+  server.listen(PORT, () => {
+    console.log(`[SERVER] running at http://localhost:${PORT}`);
+  });
 }
 
 startServer();

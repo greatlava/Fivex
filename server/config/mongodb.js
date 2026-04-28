@@ -9,91 +9,98 @@ const CONNECT_OPTIONS = {
 };
 
 let connectionListenersSetup = false;
+let connectPromise = null;
 
 const setupConnectionListeners = () => {
   if (connectionListenersSetup) return;
   connectionListenersSetup = true;
-  
+
   mongoose.connection.on('connected', () => {
-    console.log('[MONGODB] 连接已建立');
+    console.log('[MONGODB] connected');
   });
-  
+
   mongoose.connection.on('error', (err) => {
-    console.error('[MONGODB] 连接错误:', err.message);
+    console.error('[MONGODB] connection error:', err.message);
   });
-  
+
   mongoose.connection.on('disconnected', () => {
-    console.log('[MONGODB] 连接已断开');
+    console.log('[MONGODB] disconnected');
   });
-  
+
   mongoose.connection.on('reconnected', () => {
-    console.log('[MONGODB] 重新连接成功');
+    console.log('[MONGODB] reconnected');
   });
+};
+
+const connectMongo = async () => {
+  if (!MONGO_URI) {
+    throw new Error('MONGO_URI is not configured');
+  }
+
+  setupConnectionListeners();
+
+  if (mongoose.connection.readyState === 1) {
+    return mongoose.connection;
+  }
+
+  if (mongoose.connection.readyState === 2) {
+    return mongoose.connection.asPromise();
+  }
+
+  if (mongoose.connection.readyState === 3) {
+    await mongoose.disconnect().catch(() => {});
+  }
+
+  if (connectPromise) {
+    return connectPromise;
+  }
+
+  console.log('[MONGODB] connecting...');
+  connectPromise = mongoose.connect(MONGO_URI, CONNECT_OPTIONS);
+
+  try {
+    await connectPromise;
+    return mongoose.connection;
+  } finally {
+    connectPromise = null;
+  }
 };
 
 const mongoClient = {
   connect: async () => {
     try {
-      console.log('[MONGODB] 正在连接...');
-      
-      setupConnectionListeners();
-      
-      await mongoose.connect(MONGO_URI, CONNECT_OPTIONS);
-      
+      return await connectMongo();
     } catch (error) {
-      console.error('[MONGODB] 连接失败:', error.message);
+      console.error('[MONGODB] connect failed:', error.message);
       throw error;
     }
   },
-  
+
   ensureConnection: async () => {
     const readyState = mongoose.connection.readyState;
-    
+
     if (readyState === 1) {
       return true;
     }
-    
-    console.log(`[MONGODB] 连接状态: ${readyState} (0=disconnected, 1=connected, 2=connecting, 3=disconnecting)`);
-    console.log('[MONGODB] 检测到连接断开，强制创建新连接...');
-    
+
+    console.log(`[MONGODB] not connected, readyState=${readyState}`);
+
     try {
-      if (readyState !== 0) {
-        console.log('[MONGODB] 清理现有连接状态...');
-        try {
-          await mongoose.disconnect();
-          console.log('[MONGODB] 已断开现有连接');
-        } catch (disconnectErr) {
-          console.log('[MONGODB] 断开连接时忽略错误:', disconnectErr.message);
-        }
+      if (readyState === 3) {
+        await mongoose.disconnect().catch(() => {});
       }
-      
-      setupConnectionListeners();
-      
-      console.log('[MONGODB] 尝试建立新连接...');
-      await mongoose.connect(MONGO_URI, CONNECT_OPTIONS);
-      
-      if (mongoose.connection.readyState === 1) {
-        console.log('[MONGODB] 新连接建立成功');
-        return true;
-      }
-      
-      console.log('[MONGODB] 连接后状态检查失败:', mongoose.connection.readyState);
-      return false;
-      
+
+      await connectMongo();
+      return mongoose.connection.readyState === 1;
     } catch (error) {
-      console.error('[MONGODB] 建立新连接失败:', error.message);
-      
-      try {
-        await mongoose.disconnect();
-      } catch (e) {
-      }
-      
+      console.error('[MONGODB] reconnect failed:', error.message);
+      await mongoose.disconnect().catch(() => {});
       return false;
     }
   },
-  
+
   getConnection: () => mongoose.connection,
-  
+
   isConnected: () => mongoose.connection.readyState === 1,
 };
 
