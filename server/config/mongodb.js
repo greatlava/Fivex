@@ -2,43 +2,43 @@ const mongoose = require('mongoose');
 
 const MONGO_URI = process.env.MONGO_URI;
 
-const MAX_RECONNECT_ATTEMPTS_PER_CALL = 3;
-const RECONNECT_INTERVAL = 2000;
-const COOLDOWN_PERIOD = 5000;
+const CONNECT_OPTIONS = {
+  serverSelectionTimeoutMS: 5000,
+  socketTimeoutMS: 45000,
+  connectTimeoutMS: 10000,
+};
 
-let lastReconnectAttempt = 0;
-let isInCooldown = false;
+let connectionListenersSetup = false;
+
+const setupConnectionListeners = () => {
+  if (connectionListenersSetup) return;
+  connectionListenersSetup = true;
+  
+  mongoose.connection.on('connected', () => {
+    console.log('[MONGODB] 连接已建立');
+  });
+  
+  mongoose.connection.on('error', (err) => {
+    console.error('[MONGODB] 连接错误:', err.message);
+  });
+  
+  mongoose.connection.on('disconnected', () => {
+    console.log('[MONGODB] 连接已断开');
+  });
+  
+  mongoose.connection.on('reconnected', () => {
+    console.log('[MONGODB] 重新连接成功');
+  });
+};
 
 const mongoClient = {
   connect: async () => {
     try {
       console.log('[MONGODB] 正在连接...');
       
-      await mongoose.connect(MONGO_URI, {
-        serverSelectionTimeoutMS: 5000,
-        socketTimeoutMS: 45000,
-        connectTimeoutMS: 10000,
-      });
+      setupConnectionListeners();
       
-      mongoose.connection.on('connected', () => {
-        console.log('[MONGODB] 连接已建立');
-        lastReconnectAttempt = 0;
-        isInCooldown = false;
-      });
-      
-      mongoose.connection.on('error', (err) => {
-        console.error('[MONGODB] 连接错误:', err);
-      });
-      
-      mongoose.connection.on('disconnected', () => {
-        console.log('[MONGODB] 连接已断开');
-      });
-      
-      mongoose.connection.on('reconnected', () => {
-        console.log('[MONGODB] 重新连接成功');
-        lastReconnectAttempt = 0;
-        isInCooldown = false;
-      });
+      await mongoose.connect(MONGO_URI, CONNECT_OPTIONS);
       
     } catch (error) {
       console.error('[MONGODB] 连接失败:', error.message);
@@ -47,67 +47,54 @@ const mongoClient = {
   },
   
   ensureConnection: async () => {
-    if (mongoose.connection.readyState === 1) {
+    const readyState = mongoose.connection.readyState;
+    
+    if (readyState === 1) {
       return true;
     }
     
-    const now = Date.now();
+    console.log(`[MONGODB] 连接状态: ${readyState} (0=disconnected, 1=connected, 2=connecting, 3=disconnecting)`);
+    console.log('[MONGODB] 检测到连接断开，强制创建新连接...');
     
-    if (isInCooldown && (now - lastReconnectAttempt) < COOLDOWN_PERIOD) {
-      const remainingTime = Math.ceil((COOLDOWN_PERIOD - (now - lastReconnectAttempt)) / 1000);
-      console.log(`[MONGODB] 重连冷却中，${remainingTime}秒后可重试`);
-      return false;
-    }
-    
-    isInCooldown = false;
-    console.log('[MONGODB] 检测到连接断开，尝试重新连接...');
-    
-    for (let attempt = 1; attempt <= MAX_RECONNECT_ATTEMPTS_PER_CALL; attempt++) {
-      try {
-        console.log(`[MONGODB] 重连尝试 ${attempt}/${MAX_RECONNECT_ATTEMPTS_PER_CALL}...`);
-        
-        if (mongoose.connection.readyState === 0) {
-          await mongoose.connect(MONGO_URI, {
-            serverSelectionTimeoutMS: 5000,
-            socketTimeoutMS: 45000,
-            connectTimeoutMS: 10000,
-          });
-        } else if (mongoose.connection.readyState === 2 || mongoose.connection.readyState === 3) {
-          await mongoose.connection.asPromise();
-        }
-        
-        if (mongoose.connection.readyState === 1) {
-          lastReconnectAttempt = 0;
-          isInCooldown = false;
-          console.log('[MONGODB] 重连成功');
-          return true;
-        }
-        
-      } catch (error) {
-        console.error(`[MONGODB] 重连尝试 ${attempt} 失败:`, error.message);
-        
-        if (attempt < MAX_RECONNECT_ATTEMPTS_PER_CALL) {
-          console.log(`[MONGODB] ${RECONNECT_INTERVAL / 1000}秒后再次尝试...`);
-          await new Promise(resolve => setTimeout(resolve, RECONNECT_INTERVAL));
+    try {
+      if (readyState !== 0) {
+        console.log('[MONGODB] 清理现有连接状态...');
+        try {
+          await mongoose.disconnect();
+          console.log('[MONGODB] 已断开现有连接');
+        } catch (disconnectErr) {
+          console.log('[MONGODB] 断开连接时忽略错误:', disconnectErr.message);
         }
       }
+      
+      setupConnectionListeners();
+      
+      console.log('[MONGODB] 尝试建立新连接...');
+      await mongoose.connect(MONGO_URI, CONNECT_OPTIONS);
+      
+      if (mongoose.connection.readyState === 1) {
+        console.log('[MONGODB] 新连接建立成功');
+        return true;
+      }
+      
+      console.log('[MONGODB] 连接后状态检查失败:', mongoose.connection.readyState);
+      return false;
+      
+    } catch (error) {
+      console.error('[MONGODB] 建立新连接失败:', error.message);
+      
+      try {
+        await mongoose.disconnect();
+      } catch (e) {
+      }
+      
+      return false;
     }
-    
-    lastReconnectAttempt = Date.now();
-    isInCooldown = true;
-    console.error(`[MONGODB] 重连失败，进入${COOLDOWN_PERIOD / 1000}秒冷却期`);
-    return false;
   },
   
   getConnection: () => mongoose.connection,
   
   isConnected: () => mongoose.connection.readyState === 1,
-  
-  resetCooldown: () => {
-    isInCooldown = false;
-    lastReconnectAttempt = 0;
-    console.log('[MONGODB] 重连冷却已重置');
-  }
 };
 
 module.exports = mongoClient;
