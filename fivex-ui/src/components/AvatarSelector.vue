@@ -179,25 +179,25 @@ const avatars = [
   },
   {
     id: 'avatar-5',
-    name: '狐狸',
-    style: { backgroundColor: '#FFF8E7' },
+    name: '大象',
+    style: { backgroundColor: '#E8E8E8' },
     svgData: {
       viewBox: '0 0 100 100',
-      gradient: { start: '#FF7F50', end: '#FF6347' },
+      gradient: { start: '#808080', end: '#606060' },
       paths: [
-        { d: 'M50 25 C35 25 18 45 18 65 C18 85 32 95 50 95 C68 95 82 85 82 65 C82 45 65 25 50 25 Z', fill: null, stroke: '#E65C3D', strokeWidth: 2 },
-        { d: 'M15 20 L25 35 L10 35 Z', fill: '#FF7F50' },
-        { d: 'M85 20 L75 35 L90 35 Z', fill: '#FF7F50' },
-        { d: 'M15 20 L22 28 L12 28 Z', fill: '#1A1A1A' },
-        { d: 'M85 20 L78 28 L88 28 Z', fill: '#1A1A1A' },
-        { d: 'M35 70 Q50 85 65 70 L50 82 Z', fill: 'white' }
+        { d: 'M50 20 C30 20 15 40 15 62 C15 82 30 92 50 92 C70 92 85 82 85 62 C85 40 70 20 50 20 Z', fill: null, stroke: '#505050', strokeWidth: 2 },
+        { d: 'M20 40 C10 45 5 60 8 75 L18 65 Z', fill: '#808080' },
+        { d: 'M80 40 C90 45 95 60 92 75 L82 65 Z', fill: '#808080' },
+        { d: 'M50 55 C45 55 42 60 42 68 C42 75 45 80 50 80 C55 80 58 75 58 68 C58 60 55 55 50 55 Z', fill: '#505050' },
+        { d: 'M50 80 L50 92', stroke: '#505050', strokeWidth: 3 }
       ],
       circles: [
-        { cx: 38, cy: 50, r: 4, fill: '#1A1A1A' },
-        { cx: 62, cy: 50, r: 4, fill: '#1A1A1A' },
-        { cx: 37, cy: 49, r: 1, fill: 'white' },
-        { cx: 61, cy: 49, r: 1, fill: 'white' },
-        { cx: 50, cy: 68, r: 4, fill: '#1A1A1A' }
+        { cx: 38, cy: 48, r: 5, fill: '#FFFFFF' },
+        { cx: 62, cy: 48, r: 5, fill: '#FFFFFF' },
+        { cx: 38, cy: 48, r: 2, fill: '#1A1A1A' },
+        { cx: 62, cy: 48, r: 2, fill: '#1A1A1A' },
+        { cx: 38, cy: 47, r: 1, fill: 'white' },
+        { cx: 62, cy: 47, r: 1, fill: 'white' }
       ]
     }
   },
@@ -225,26 +225,25 @@ const avatars = [
   },
   {
     id: 'avatar-7',
-    name: '猫头鹰',
-    style: { backgroundColor: '#F0E6D2' },
+    name: '卡皮巴拉',
+    style: { backgroundColor: '#F5E6D3' },
     svgData: {
       viewBox: '0 0 100 100',
-      gradient: { start: '#8B7355', end: '#6B4423' },
+      gradient: { start: '#D2B48C', end: '#A0826D' },
       paths: [
-        { d: 'M50 15 C30 15 15 38 18 62 C20 85 35 95 50 95 C65 95 80 85 82 62 C85 38 70 15 50 15 Z', fill: null, stroke: '#5D4037', strokeWidth: 2 },
-        { d: 'M30 22 L20 10 L18 28 Z', fill: '#8B7355' },
-        { d: 'M70 22 L80 10 L82 28 Z', fill: '#8B7355' },
-        { d: 'M30 40 C20 48 20 65 30 70 C38 65 38 48 30 40 Z', fill: '#FFF8DC' },
-        { d: 'M70 40 C80 48 80 65 70 70 C62 65 62 48 70 40 Z', fill: '#FFF8DC' },
-        { d: 'M42 58 L50 65 L58 58 L50 70 Z', fill: '#FFD700' }
+        { d: 'M50 25 C32 25 18 42 18 62 C18 82 32 92 50 92 C68 92 82 82 82 62 C82 42 68 25 50 25 Z', fill: null, stroke: '#8B7355', strokeWidth: 2 },
+        { d: 'M25 35 C20 30 12 35 15 45 L22 40 Z', fill: '#D2B48C' },
+        { d: 'M75 35 C80 30 88 35 85 45 L78 40 Z', fill: '#D2B48C' },
+        { d: 'M45 60 Q50 65 55 60 Q50 68 45 60 Z', fill: '#5D4037' },
+        { d: 'M38 50 C35 52 35 55 38 57 C41 55 41 52 38 50 Z', fill: '#8B7355' },
+        { d: 'M62 50 C65 52 65 55 62 57 C59 55 59 52 62 50 Z', fill: '#8B7355' }
       ],
       circles: [
-        { cx: 35, cy: 55, r: 8, fill: '#FFD700' },
-        { cx: 65, cy: 55, r: 8, fill: '#FFD700' },
-        { cx: 35, cy: 55, r: 4, fill: '#1A1A1A' },
-        { cx: 65, cy: 55, r: 4, fill: '#1A1A1A' },
-        { cx: 36, cy: 54, r: 1, fill: 'white' },
-        { cx: 66, cy: 54, r: 1, fill: 'white' }
+        { cx: 38, cy: 45, r: 4, fill: '#2C1810' },
+        { cx: 62, cy: 45, r: 4, fill: '#2C1810' },
+        { cx: 37, cy: 44, r: 1, fill: 'white' },
+        { cx: 61, cy: 44, r: 1, fill: 'white' },
+        { cx: 50, cy: 62, r: 2, fill: '#3E2723' }
       ]
     }
   },

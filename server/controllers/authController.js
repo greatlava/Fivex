@@ -156,6 +156,20 @@ const validateCaptcha = async (captchaId) => {
   }
 };
 
+const invalidateCaptcha = async (captchaId) => {
+  if (!captchaId) return;
+
+  const redis = redisClient.getClient();
+  if (!redis) return;
+
+  try {
+    await redis.del(`captcha:slider:${captchaId}`);
+    console.log(`[CAPTCHA] 验证码已失效: ${captchaId}`);
+  } catch (error) {
+    console.error('[CAPTCHA] 失效验证码错误:', error);
+  }
+};
+
 const register = async (req, res) => {
   try {
     const { username, password, nickname, avatar, captchaId } = req.body;
@@ -170,6 +184,7 @@ const register = async (req, res) => {
     }
 
     if (!username || !password || !nickname) {
+      await invalidateCaptcha(captchaId);
       return res.status(400).json({
         success: false,
         message: '用户名、密码和昵称不能为空',
@@ -178,6 +193,7 @@ const register = async (req, res) => {
     }
 
     if (username.length < 3 || username.length > 20) {
+      await invalidateCaptcha(captchaId);
       return res.status(400).json({
         success: false,
         message: '用户名长度必须在 3-20 个字符之间',
@@ -186,6 +202,7 @@ const register = async (req, res) => {
     }
 
     if (nickname.length < 2 || nickname.length > 20) {
+      await invalidateCaptcha(captchaId);
       return res.status(400).json({
         success: false,
         message: '昵称长度必须在 2-20 个字符之间',
@@ -194,6 +211,7 @@ const register = async (req, res) => {
     }
 
     if (password.length < 6) {
+      await invalidateCaptcha(captchaId);
       return res.status(400).json({
         success: false,
         message: '密码长度不能少于 6 个字符',
@@ -203,6 +221,7 @@ const register = async (req, res) => {
 
     const existingUser = await User.findOne({ username });
     if (existingUser) {
+      await invalidateCaptcha(captchaId);
       await logRegister(username, { success: false, reason: '用户名已存在' }, req);
       return res.status(400).json({
         success: false,
@@ -257,6 +276,7 @@ const register = async (req, res) => {
 
   } catch (error) {
     console.error('[AUTH] 注册错误:', error);
+    await invalidateCaptcha(req.body?.captchaId);
     await logRegister(req.body?.username || 'unknown', { success: false, error: error.message }, req);
     res.status(500).json({
       success: false,
