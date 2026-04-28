@@ -8,7 +8,17 @@
         </svg>
         <span>{{ currentRegion }}</span>
       </div>
-      <button class="btn-quick" @click="quickStart">快速开始</button>
+      <div class="topbar-right">
+        <div class="user-info" v-if="userStore.isAuthenticated && userStore.userInfo">
+          <div class="user-avatar">
+            <span class="avatar-text">{{ userStore.userInfo.nickname?.charAt(0) || userStore.userInfo.username?.charAt(0) }}</span>
+          </div>
+          <span class="user-name">{{ userStore.userInfo.nickname || userStore.userInfo.username }}</span>
+          <button class="logout-btn" @click="handleLogout">退出</button>
+        </div>
+        <button class="btn-login" v-else @click="showAuthModal = true">登录 / 注册</button>
+        <button class="btn-quick" @click="quickStart">快速开始</button>
+      </div>
     </div>
     <div class="grid-wrap">
       <div class="table-grid">
@@ -20,12 +30,23 @@
         />
       </div>
     </div>
+    
+    <AuthModal
+      v-model:visible="showAuthModal"
+      :initialTab="authTab"
+      :pendingAction="pendingAction"
+      @login-success="handleAuthSuccess"
+      @register-success="handleAuthSuccess"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import { useUserStore } from '@/stores/user'
 import TableCard from './TableCard.vue'
+import AuthModal from './AuthModal.vue'
+import authApi from '@/api/auth'
 
 const props = defineProps({
   currentRegion: {
@@ -34,9 +55,11 @@ const props = defineProps({
   }
 })
 
-const quickStart = () => {
-  console.log('Quick start game')
-}
+const userStore = useUserStore()
+
+const showAuthModal = ref(false)
+const authTab = ref('login')
+const pendingAction = ref(null)
 
 const generateTables = () => {
   const tables = []
@@ -89,8 +112,90 @@ const generateTables = () => {
 
 const tables = ref(generateTables())
 
+const quickStart = () => {
+  console.log('Quick start game')
+  if (!userStore.isAuthenticated) {
+    pendingAction.value = {
+      type: 'quickStart',
+      data: null
+    }
+    authTab.value = 'login'
+    showAuthModal.value = true
+    return
+  }
+  console.log('快速开始游戏，用户已登录:', userStore.userInfo)
+}
+
 const handleTableClick = (table) => {
   console.log('Table clicked:', table)
+  
+  const hasEmptySlot = !table.player1 || !table.player2
+  
+  if (!hasEmptySlot) {
+    console.log('桌子已满，无法坐下')
+    return
+  }
+  
+  if (!userStore.isAuthenticated) {
+    const slot = !table.player1 ? 'player1' : 'player2'
+    
+    pendingAction.value = {
+      type: 'sitDown',
+      data: {
+        table,
+        slot
+      }
+    }
+    
+    authTab.value = 'login'
+    showAuthModal.value = true
+    return
+  }
+  
+  sitDown(table)
+}
+
+const sitDown = (table) => {
+  const slot = !table.player1 ? 'player1' : 'player2'
+  const user = userStore.userInfo
+  
+  console.log(`用户 ${user.username} 坐到桌子 ${table.number} 的 ${slot} 位置`)
+  
+  const tableIndex = tables.value.findIndex(t => t.id === table.id)
+  if (tableIndex !== -1) {
+    tables.value[tableIndex][slot] = {
+      name: user.nickname || user.username,
+      score: 1500,
+      isHost: slot === 'player1',
+      avatar: user.avatar
+    }
+  }
+}
+
+const handleAuthSuccess = ({ user, pendingAction: action }) => {
+  console.log('认证成功:', user, '待执行操作:', action)
+  
+  if (action) {
+    switch (action.type) {
+      case 'sitDown':
+        sitDown(action.data.table)
+        break
+      case 'quickStart':
+        console.log('快速开始游戏')
+        break
+    }
+  }
+  
+  pendingAction.value = null
+}
+
+const handleLogout = async () => {
+  try {
+    await authApi.logout()
+  } catch (error) {
+    console.error('Logout error:', error)
+  }
+  userStore.logout()
 }
 </script>
 
@@ -124,6 +229,73 @@ const handleTableClick = (table) => {
 
 .breadcrumb .sep-icon {
   color: rgba(154, 136, 120, 0.6);
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.user-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.avatar-text {
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.user-name {
+  font-size: 13px;
+  color: var(--txt-secondary);
+  font-weight: 500;
+}
+
+.logout-btn {
+  padding: 4px 10px;
+  font-size: 11px;
+  color: var(--txt-muted);
+  background: transparent;
+  border: 1px solid var(--border-sidebar);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.logout-btn:hover {
+  color: var(--txt-secondary);
+  border-color: var(--border-card);
+}
+
+.btn-login {
+  font-size: 12px;
+  font-weight: 500;
+  padding: 6px 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--accent);
+  background: transparent;
+  color: var(--accent);
+  cursor: pointer;
+  letter-spacing: .02em;
+  transition: background var(--transition-fast), border-color var(--transition-fast);
+}
+
+.btn-login:hover {
+  background: rgba(224, 120, 64, 0.1);
 }
 
 .btn-quick {

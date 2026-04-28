@@ -13,6 +13,18 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  nickname: {
+    type: String,
+    required: true,
+    trim: true,
+    minlength: 2,
+    maxlength: 20
+  },
+  avatar: {
+    type: String,
+    required: true,
+    default: 'avatar-1'
+  },
   wins: {
     type: Number,
     default: 0,
@@ -27,6 +39,10 @@ const userSchema = new mongoose.Schema({
     type: Number,
     default: 0,
     min: 0
+  },
+  lastLoginAt: {
+    type: Date,
+    default: null
   },
   createdAt: {
     type: Date,
