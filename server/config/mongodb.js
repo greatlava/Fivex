@@ -95,7 +95,7 @@ const mongoClient = {
     } catch (error) {
       console.error('[MONGODB] reconnect failed:', error.message);
       await mongoose.disconnect().catch(() => {});
-      return false;
+      throw error;
     }
   },
 

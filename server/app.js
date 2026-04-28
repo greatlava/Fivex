@@ -7,6 +7,7 @@ const mongoClient = require('./config/mongodb');
 const redisClient = require('./config/redis');
 const socketAuthMiddleware = require('./middlewares/socketAuth');
 const { ensureDbConnection } = require('./middlewares/dbConnection');
+const errorHandler = require('./middlewares/errorHandler');
 
 const app = express();
 const server = http.createServer(app);
@@ -51,19 +52,7 @@ io.on('connection', (socket) => {
   });
 });
 
-app.use((error, req, res, next) => {
-  console.error('[EXPRESS] 错误:', error);
-  
-  if (res.headersSent) {
-    return next(error);
-  }
-  
-  res.status(500).json({
-    success: false,
-    message: '服务器内部错误',
-    error: error.message
-  });
-});
+app.use(errorHandler);
 
 process.on('unhandledRejection', (reason, promise) => {
   console.error('[PROCESS] 未处理的 Promise 拒绝:', promise, '原因:', reason);
