@@ -3,7 +3,7 @@ const onlinePlayersService = require('../services/onlinePlayersService');
 
 const getRooms = async (req, res) => {
   try {
-    const { region = '华东一区' } = req.query;
+    const { region = 'HD1' } = req.query;
     const rooms = await roomService.getRooms(region);
     
     res.json({
@@ -27,7 +27,7 @@ const getRooms = async (req, res) => {
 const getRoom = async (req, res) => {
   try {
     const { roomNumber } = req.params;
-    const { region = '华东一区' } = req.query;
+    const { region = 'HD1' } = req.query;
     
     const room = await roomService.getRoomByNumber(parseInt(roomNumber), region);
     
@@ -80,7 +80,7 @@ const getOnlinePlayers = async (req, res) => {
 
 const sitDown = async (req, res) => {
   try {
-    const { roomNumber, region = '华东一区' } = req.body;
+    const { roomNumber, region = 'HD1' } = req.body;
     const userId = req.user._id;
     
     if (!roomNumber) {
@@ -110,7 +110,7 @@ const sitDown = async (req, res) => {
 
 const leaveRoom = async (req, res) => {
   try {
-    const { region = '华东一区' } = req.body;
+    const { region = 'HD1' } = req.body;
     const userId = req.user._id;
     
     const result = await roomService.leaveRoom(userId, region);
@@ -132,7 +132,7 @@ const leaveRoom = async (req, res) => {
 
 const quickStart = async (req, res) => {
   try {
-    const { region = '华东一区' } = req.body;
+    const { region = 'HD1' } = req.body;
     const userId = req.user._id;
     
     const result = await roomService.quickStart(userId, region);

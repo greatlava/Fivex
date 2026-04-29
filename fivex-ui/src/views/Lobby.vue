@@ -6,10 +6,10 @@
     </header>
     <main class="body-wrap">
       <aside class="lobby-left">
-        <RegionList v-model="currentRegion" />
+        <RegionList v-model="currentRegion" @update:regions="handleRegionsUpdate" />
       </aside>
       <section class="lobby-center">
-        <TableGrid :currentRegion="currentRegion" />
+        <TableGrid :currentRegion="currentRegion" :currentRegionName="currentRegionName" />
       </section>
       <aside class="lobby-right">
         <UserList />
@@ -19,12 +19,22 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import RegionList from '@/components/RegionList.vue'
 import TableGrid from '@/components/TableGrid.vue'
 import UserList from '@/components/UserList.vue'
 
-const currentRegion = ref('华东一区')
+const currentRegion = ref('HD1')
+const regions = ref([])
+
+const currentRegionName = computed(() => {
+  const region = regions.value.find(r => r.code === currentRegion.value)
+  return region ? region.name : currentRegion.value
+})
+
+const handleRegionsUpdate = (newRegions) => {
+  regions.value = newRegions
+}
 </script>
 
 <style scoped>

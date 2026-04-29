@@ -3,10 +3,10 @@
     <div class="sidebar-label">游戏大区</div>
     <div
       v-for="region in regions"
-      :key="region.name"
+      :key="region.code"
       class="sidebar-item"
-      :class="{ active: modelValue === region.name }"
-      @click="selectRegion(region.name)"
+      :class="{ active: modelValue === region.code }"
+      @click="selectRegion(region.code)"
     >
       <span class="name">{{ region.name }}</span>
     </div>
@@ -14,29 +14,39 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import regionApi from '../api/region'
 
 const props = defineProps({
   modelValue: {
     type: String,
-    default: '华东一区'
+    default: 'HD1'
   }
 })
 
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits(['update:modelValue', 'update:regions'])
 
-const regions = ref([
-  { name: '华东一区' },
-  { name: '华东二区' },
-  { name: '华北一区' },
-  { name: '华南一区' },
-  { name: '华北二区' },
-  { name: '华南二区' }
-])
+const regions = ref([])
 
-const selectRegion = (regionName) => {
-  emit('update:modelValue', regionName)
+const fetchRegions = async () => {
+  try {
+    const response = await regionApi.getRegions()
+    if (response.data.success && response.data.data?.regions) {
+      regions.value = response.data.data.regions
+      emit('update:regions', regions.value)
+    }
+  } catch (error) {
+    console.error('获取大区列表失败:', error)
+  }
 }
+
+const selectRegion = (regionCode) => {
+  emit('update:modelValue', regionCode)
+}
+
+onMounted(() => {
+  fetchRegions()
+})
 </script>
 
 <style scoped>

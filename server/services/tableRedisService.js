@@ -35,7 +35,7 @@ const createEmptyTable = (tableNumber, region) => {
 };
 
 const tableRedisService = {
-  async getTables(region = '华东一区') {
+  async getTables(region = 'HD1') {
     const redis = redisClient.getClient();
     if (!redis) {
       const fallbackTables = [];
@@ -75,7 +75,7 @@ const tableRedisService = {
     }
   },
   
-  async getTable(tableNumber, region = '华东一区') {
+  async getTable(tableNumber, region = 'HD1') {
     const redis = redisClient.getClient();
     if (!redis) {
       return createEmptyTable(tableNumber, region);
@@ -100,7 +100,7 @@ const tableRedisService = {
     }
   },
   
-  async saveTable(table, region = '华东一区') {
+  async saveTable(table, region = 'HD1') {
     const redis = redisClient.getClient();
     if (!redis) {
       return false;
@@ -117,7 +117,7 @@ const tableRedisService = {
     }
   },
   
-  async deleteTable(tableNumber, region = '华东一区') {
+  async deleteTable(tableNumber, region = 'HD1') {
     const redis = redisClient.getClient();
     if (!redis) {
       return false;
@@ -220,12 +220,12 @@ const tableRedisService = {
     }
   },
   
-  async getWaitingTables(region = '华东一区') {
+  async getWaitingTables(region = 'HD1') {
     const allTables = await this.getTables(region);
     return allTables.filter(table => table.status === 'waiting');
   },
   
-  async getAvailableTableNumbers(region = '华东一区') {
+  async getAvailableTableNumbers(region = 'HD1') {
     const allTables = await this.getTables(region);
     const availableNumbers = [];
     
