@@ -34,7 +34,7 @@ const createEmptyTable = (tableNumber, region) => {
   };
 };
 
-const formatTableRedisService = {
+const tableRedisService = {
   async getTables(region = '华东一区') {
     const redis = redisClient.getClient();
     if (!redis) {
