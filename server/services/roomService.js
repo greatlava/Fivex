@@ -255,7 +255,6 @@ const roomService = {
   async quickStart(userId, region = '华东一区') {
     try {
       const currentRoom = await Room.findOne({
-        region,
         $or: [
           { player1: userId },
           { player2: userId }
@@ -263,7 +262,7 @@ const roomService = {
       });
       
       if (currentRoom) {
-        await this.leaveRoom(userId, region);
+        await this.leaveRoom(userId, currentRoom.region);
       }
       
       const waitingRooms = await Room.find({
