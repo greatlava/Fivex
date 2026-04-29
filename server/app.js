@@ -8,6 +8,8 @@ const redisClient = require('./config/redis');
 const socketAuthMiddleware = require('./middlewares/socketAuth');
 const { ensureDbConnection } = require('./middlewares/dbConnection');
 const errorHandler = require('./middlewares/errorHandler');
+const roomService = require('./services/roomService');
+const onlinePlayersService = require('./services/onlinePlayersService');
 
 const app = express();
 const server = http.createServer(app);
@@ -30,6 +32,7 @@ app.use('/api', (req, res, next) => {
 
 app.use('/api/test', require('./routes/test'));
 app.use('/api/auth', require('./routes/auth'));
+app.use('/api/lobby', require('./routes/lobby'));
 
 const io = new Server(server, {
   cors: {
@@ -40,11 +43,32 @@ const io = new Server(server, {
 
 io.use(socketAuthMiddleware);
 
-io.on('connection', (socket) => {
+io.on('connection', async (socket) => {
   console.log(`[SOCKET] 用户连接: ${socket.id}, 用户: ${socket.user?.username || '未知'}`);
   
-  socket.on('disconnect', (reason) => {
+  if (socket.user) {
+    await onlinePlayersService.addPlayer(socket.user);
+    io.emit('player:online', {
+      id: socket.user._id,
+      username: socket.user.username,
+      nickname: socket.user.nickname
+    });
+  }
+  
+  socket.on('disconnect', async (reason) => {
     console.log(`[SOCKET] 用户断开连接: ${socket.id}, 用户: ${socket.user?.username || '未知'}, 原因: ${reason}`);
+    
+    if (socket.user) {
+      const userId = socket.user._id;
+      
+      await roomService.leaveRoom(userId);
+      
+      await onlinePlayersService.removePlayer(userId);
+      
+      io.emit('player:offline', {
+        id: userId
+      });
+    }
   });
   
   socket.on('error', (error) => {

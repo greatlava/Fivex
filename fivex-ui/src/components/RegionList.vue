@@ -3,13 +3,12 @@
     <div class="sidebar-label">游戏大区</div>
     <div
       v-for="region in regions"
-      :key="region.id"
+      :key="region.name"
       class="sidebar-item"
-      :class="{ active: selectedRegionId === region.id }"
-      @click="selectRegion(region.id)"
+      :class="{ active: modelValue === region.name }"
+      @click="selectRegion(region.name)"
     >
       <span class="name">{{ region.name }}</span>
-      <span class="num">{{ region.onlineCount }}</span>
     </div>
   </div>
 </template>
@@ -17,19 +16,26 @@
 <script setup>
 import { ref } from 'vue'
 
-const selectedRegionId = ref(1)
+const props = defineProps({
+  modelValue: {
+    type: String,
+    default: '华东一区'
+  }
+})
+
+const emit = defineEmits(['update:modelValue'])
 
 const regions = ref([
-  { id: 1, name: '华东一区', onlineCount: 1256 },
-  { id: 2, name: '华东二区', onlineCount: 987 },
-  { id: 3, name: '华北一区', onlineCount: 2134 },
-  { id: 4, name: '华南一区', onlineCount: 1876 },
-  { id: 5, name: '华北二区', onlineCount: 654 },
-  { id: 6, name: '华南二区', onlineCount: 432 }
+  { name: '华东一区' },
+  { name: '华东二区' },
+  { name: '华北一区' },
+  { name: '华南一区' },
+  { name: '华北二区' },
+  { name: '华南二区' }
 ])
 
-const selectRegion = (regionId) => {
-  selectedRegionId.value = regionId
+const selectRegion = (regionName) => {
+  emit('update:modelValue', regionName)
 }
 </script>
 

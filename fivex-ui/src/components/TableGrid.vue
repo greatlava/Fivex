@@ -17,10 +17,12 @@
           <button class="logout-btn" @click="handleLogout">退出</button>
         </div>
         <button class="btn-login" v-else @click="showAuthModal = true">登录 / 注册</button>
-        <button class="btn-quick" @click="quickStart">快速开始</button>
+        <button class="btn-quick" @click="quickStart" :disabled="isProcessing">
+          {{ isProcessing ? '处理中...' : '快速开始' }}
+        </button>
       </div>
     </div>
-    <div class="grid-wrap">
+    <div class="grid-wrap" ref="gridWrapRef">
       <div class="table-grid">
         <TableCard
           v-for="table in tables"
@@ -28,6 +30,12 @@
           :table="table"
           @click="handleTableClick"
         />
+      </div>
+      <div v-if="tables.length === 0 && !isLoading" class="empty-message">
+        暂无房间数据
+      </div>
+      <div v-if="isLoading" class="loading-message">
+        加载中...
       </div>
     </div>
     
@@ -42,11 +50,12 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useUserStore } from '@/stores/user'
 import TableCard from './TableCard.vue'
 import AuthModal from './AuthModal.vue'
 import authApi from '@/api/auth'
+import lobbyApi from '@/api/lobby'
 
 const props = defineProps({
   currentRegion: {
@@ -57,63 +66,57 @@ const props = defineProps({
 
 const userStore = useUserStore()
 
+const tables = ref([])
 const showAuthModal = ref(false)
 const authTab = ref('login')
 const pendingAction = ref(null)
+const isProcessing = ref(false)
+const isLoading = ref(false)
+const gridWrapRef = ref(null)
 
-const generateTables = () => {
-  const tables = []
-  const statuses = ['empty', 'empty', 'waiting', 'playing']
+let refreshInterval = null
+
+const scrollToTable = (tableNumber) => {
+  if (!gridWrapRef.value) return
   
-  for (let i = 1; i <= 99; i++) {
-    const statusIndex = Math.floor(Math.random() * 4)
-    const status = statuses[statusIndex]
-    
-    const table = {
-      id: i,
-      number: i,
-      status: status,
-      rules: {
-        quickStart: false,
-        timeLimit: 30
-      },
-      player1: null,
-      player2: null
+  nextTick(() => {
+    const tableElement = gridWrapRef.value.querySelector(`[data-table-number="${tableNumber}"]`)
+    if (tableElement) {
+      tableElement.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center'
+      })
     }
-    
-    if (status !== 'empty') {
-      const hasPlayer1 = Math.random() > 0.3
-      const hasPlayer2 = status === 'playing' ? true : Math.random() > 0.5
-      
-      if (hasPlayer1) {
-        table.player1 = {
-          name: `玩家${Math.floor(Math.random() * 1000)}`,
-          score: Math.floor(Math.random() * 2000) + 1000,
-          isHost: true,
-          avatar: null
-        }
-      }
-      
-      if (hasPlayer2) {
-        table.player2 = {
-          name: `玩家${Math.floor(Math.random() * 1000)}`,
-          score: Math.floor(Math.random() * 2000) + 1000,
-          isHost: false,
-          avatar: null
-        }
-      }
-    }
-    
-    tables.push(table)
-  }
-  
-  return tables
+  })
 }
 
-const tables = ref(generateTables())
+const scrollToTop = () => {
+  if (!gridWrapRef.value) return
+  
+  gridWrapRef.value.scrollTo({
+    top: 0,
+    behavior: 'smooth'
+  })
+}
 
-const quickStart = () => {
-  console.log('Quick start game')
+const fetchRooms = async () => {
+  isLoading.value = true
+  try {
+    const result = await lobbyApi.getRooms(props.currentRegion)
+    if (result.success) {
+      tables.value = result.data.rooms || []
+    }
+  } catch (error) {
+    console.error('[TableGrid] 获取房间列表失败:', error)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+const quickStart = async () => {
+  if (isProcessing.value) return
+  
+  console.log('快速开始游戏')
   if (!userStore.isAuthenticated) {
     pendingAction.value = {
       type: 'quickStart',
@@ -123,10 +126,27 @@ const quickStart = () => {
     showAuthModal.value = true
     return
   }
-  console.log('快速开始游戏，用户已登录:', userStore.userInfo)
+  
+  isProcessing.value = true
+  try {
+    const result = await lobbyApi.quickStart(props.currentRegion)
+    if (result.success) {
+      console.log('快速开始成功:', result.data)
+      await fetchRooms()
+      if (result.data.room) {
+        scrollToTable(result.data.room.number)
+      }
+    } else {
+      console.error('快速开始失败:', result.message)
+    }
+  } catch (error) {
+    console.error('快速开始错误:', error)
+  } finally {
+    isProcessing.value = false
+  }
 }
 
-const handleTableClick = (table) => {
+const handleTableClick = async (table) => {
   console.log('Table clicked:', table)
   
   const hasEmptySlot = !table.player1 || !table.player2
@@ -152,41 +172,47 @@ const handleTableClick = (table) => {
     return
   }
   
-  sitDown(table)
+  await sitDown(table)
 }
 
-const sitDown = (table) => {
-  const slot = !table.player1 ? 'player1' : 'player2'
-  const user = userStore.userInfo
+const sitDown = async (table) => {
+  if (isProcessing.value) return
   
-  console.log(`用户 ${user.username} 坐到桌子 ${table.number} 的 ${slot} 位置`)
-  
-  const tableIndex = tables.value.findIndex(t => t.id === table.id)
-  if (tableIndex !== -1) {
-    tables.value[tableIndex][slot] = {
-      name: user.nickname || user.username,
-      score: 1500,
-      isHost: slot === 'player1',
-      avatar: user.avatar
+  isProcessing.value = true
+  try {
+    const result = await lobbyApi.sitDown(table.number, props.currentRegion)
+    if (result.success) {
+      console.log('坐下成功:', result.data)
+      await fetchRooms()
+      if (result.data.room) {
+        scrollToTable(result.data.room.number)
+      }
+    } else {
+      console.error('坐下失败:', result.message)
     }
+  } catch (error) {
+    console.error('坐下错误:', error)
+  } finally {
+    isProcessing.value = false
   }
 }
 
-const handleAuthSuccess = ({ user, pendingAction: action }) => {
+const handleAuthSuccess = async ({ user, pendingAction: action }) => {
   console.log('认证成功:', user, '待执行操作:', action)
   
   if (action) {
     switch (action.type) {
       case 'sitDown':
-        sitDown(action.data.table)
+        await sitDown(action.data.table)
         break
       case 'quickStart':
-        console.log('快速开始游戏')
+        await quickStart()
         break
     }
   }
   
   pendingAction.value = null
+  await fetchRooms()
 }
 
 const handleLogout = async () => {
@@ -196,7 +222,34 @@ const handleLogout = async () => {
     console.error('Logout error:', error)
   }
   userStore.logout()
+  await fetchRooms()
 }
+
+onMounted(() => {
+  fetchRooms()
+  refreshInterval = setInterval(fetchRooms, 5000)
+})
+
+onUnmounted(() => {
+  if (refreshInterval) {
+    clearInterval(refreshInterval)
+  }
+})
+
+watch(
+  () => props.currentRegion,
+  () => {
+    scrollToTop()
+    fetchRooms()
+  }
+)
+
+watch(
+  () => userStore.isAuthenticated,
+  () => {
+    fetchRooms()
+  }
+)
 </script>
 
 <style scoped>
@@ -311,15 +364,22 @@ const handleLogout = async () => {
   transition: background var(--transition-fast), border-color var(--transition-fast);
 }
 
-.btn-quick:hover {
+.btn-quick:hover:not(:disabled) {
   background: #c8aa92;
   border-color: #c0a080;
+}
+
+.btn-quick:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .grid-wrap {
   flex: 1;
   padding: 16px;
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
 }
 
 .table-grid {
@@ -327,5 +387,14 @@ const handleLogout = async () => {
   flex-wrap: wrap;
   gap: 12px;
   align-content: flex-start;
+}
+
+.empty-message, .loading-message {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  font-size: 13px;
+  color: var(--txt-muted);
 }
 </style>

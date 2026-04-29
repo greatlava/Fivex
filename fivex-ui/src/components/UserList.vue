@@ -1,5 +1,33 @@
 <template>
   <div class="right-panel">
+    <div class="user-info-section" v-if="userStore.isAuthenticated && userStore.userInfo">
+      <div class="user-info-header">
+        <div class="user-avatar-large">
+          <span class="avatar-text-large">{{ userStore.userInfo.nickname?.charAt(0) || userStore.userInfo.username?.charAt(0) }}</span>
+        </div>
+        <div class="user-name-level">
+          <div class="user-nickname">{{ userStore.userInfo.nickname || userStore.userInfo.username }}</div>
+          <div class="user-level-score">Lv.{{ userLevel }} · {{ userScore }}分</div>
+        </div>
+      </div>
+      <div class="user-stats">
+        <div class="stat-item">
+          <span class="stat-value">{{ userStore.userInfo.wins || 0 }}</span>
+          <span class="stat-label">胜</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <span class="stat-value">{{ userStore.userInfo.losses || 0 }}</span>
+          <span class="stat-label">负</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <span class="stat-value">{{ userStore.userInfo.draws || 0 }}</span>
+          <span class="stat-label">平</span>
+        </div>
+      </div>
+    </div>
+    
     <div class="rp-header-wrap">
       <div class="rp-header">
         <span>在线玩家</span>
@@ -18,12 +46,11 @@
           <svg viewBox="0 0 24 24" width="14" height="14">
             <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z" fill="#A09080"/>
           </svg>
-          <div class="dot" :class="user.status" v-if="user.status === 'online'"></div>
+          <div class="dot" :class="user.status" v-if="user.status === 'online' || user.status === 'playing'"></div>
         </div>
         <div class="player-info">
           <div class="player-name">
-            {{ user.name }}
-            <span v-if="user.isVip" class="vip-badge">VIP</span>
+            {{ user.nickname || user.username }}
           </div>
           <div class="player-meta">Lv.{{ user.level }} · {{ user.score }}</div>
         </div>
@@ -33,49 +60,76 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { useUserStore } from '@/stores/user'
+import lobbyApi from '@/api/lobby'
 
+const userStore = useUserStore()
 const searchQuery = ref('')
+const onlineUsers = ref([])
 
-const generateUsers = () => {
-  const users = []
-  const statuses = ['online', 'playing', 'idle']
-  const names = ['张三', '李四', '王五', '赵六', '钱七', '孙八', '周九', '吴十', 
-                 '郑十一', '王十二', '冯十三', '陈十四', '褚十五', '卫十六', 
-                 '蒋十七', '沈十八', '韩十九', '杨二十', '朱二十一', '秦二十二']
-  
-  for (let i = 1; i <= 50; i++) {
-    const nameIndex = (i - 1) % names.length
-    users.push({
-      id: i,
-      name: `${names[nameIndex]}${i}`,
-      avatar: null,
-      status: statuses[Math.floor(Math.random() * 3)],
-      level: Math.floor(Math.random() * 30) + 1,
-      score: Math.floor(Math.random() * 3000) + 1000,
-      isVip: Math.random() > 0.7
-    })
-  }
-  
-  return users
-}
+const userLevel = computed(() => {
+  const wins = userStore.userInfo?.wins || 0
+  const losses = userStore.userInfo?.losses || 0
+  const draws = userStore.userInfo?.draws || 0
+  const totalGames = wins + losses + draws
+  return Math.floor(totalGames / 10) + 1
+})
 
-const onlineUsers = ref(generateUsers())
+const userScore = computed(() => {
+  const wins = userStore.userInfo?.wins || 0
+  const losses = userStore.userInfo?.losses || 0
+  return 1000 + wins * 10 - losses * 5
+})
 
 const filteredUsers = computed(() => {
   let users = [...onlineUsers.value]
   
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase()
-    users = users.filter(u => u.name.toLowerCase().includes(query))
+    users = users.filter(u => 
+      (u.nickname?.toLowerCase().includes(query)) || 
+      (u.username?.toLowerCase().includes(query))
+    )
   }
   
   return users
 })
 
+const fetchOnlinePlayers = async () => {
+  try {
+    const result = await lobbyApi.getOnlinePlayers()
+    if (result.success) {
+      onlineUsers.value = result.data.players || []
+    }
+  } catch (error) {
+    console.error('[UserList] 获取在线玩家列表失败:', error)
+  }
+}
+
 const handleUserClick = (user) => {
   console.log('User clicked:', user)
 }
+
+let refreshInterval = null
+
+onMounted(() => {
+  fetchOnlinePlayers()
+  refreshInterval = setInterval(fetchOnlinePlayers, 10000)
+})
+
+onUnmounted(() => {
+  if (refreshInterval) {
+    clearInterval(refreshInterval)
+  }
+})
+
+watch(
+  () => userStore.isAuthenticated,
+  () => {
+    fetchOnlinePlayers()
+  }
+)
 </script>
 
 <style scoped>
@@ -87,6 +141,89 @@ const handleUserClick = (user) => {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+}
+
+.user-info-section {
+  flex-shrink: 0;
+  padding: 12px 10px;
+  background: var(--bg-main);
+  border-bottom: 1px solid var(--border-sidebar);
+}
+
+.user-info-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.user-avatar-large {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.avatar-text-large {
+  color: white;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.user-name-level {
+  flex: 1;
+  min-width: 0;
+}
+
+.user-nickname {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--txt-primary);
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-level-score {
+  font-size: 11px;
+  color: var(--txt-muted);
+}
+
+.user-stats {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding-top: 8px;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.stat-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--txt-primary);
+}
+
+.stat-label {
+  font-size: 10px;
+  color: var(--txt-muted);
+}
+
+.stat-divider {
+  width: 1px;
+  height: 20px;
+  background: var(--border-sidebar);
 }
 
 .rp-header-wrap {
@@ -175,6 +312,10 @@ const handleUserClick = (user) => {
   border: 1.5px solid var(--bg-rp);
 }
 
+.player-avatar .dot.playing {
+  background: var(--accent);
+}
+
 .player-info {
   flex: 1;
   min-width: 0;
@@ -187,16 +328,6 @@ const handleUserClick = (user) => {
   display: flex;
   align-items: center;
   gap: 4px;
-}
-
-.vip-badge {
-  font-size: 8px;
-  padding: 1px 4px;
-  border-radius: var(--radius-sm);
-  background: var(--vip-bg);
-  color: #fff;
-  font-weight: 600;
-  letter-spacing: .02em;
 }
 
 .player-meta {

@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed, watch } from 'vue'
 import authApi from '@/api/auth'
+import socketService from '@/services/socket'
 
 export const useUserStore = defineStore('user', () => {
   const token = ref(localStorage.getItem('token') || null)
@@ -13,8 +14,10 @@ export const useUserStore = defineStore('user', () => {
     token.value = newToken
     if (newToken) {
       localStorage.setItem('token', newToken)
+      socketService.connect(newToken)
     } else {
       localStorage.removeItem('token')
+      socketService.disconnect()
     }
   }
 
@@ -32,6 +35,7 @@ export const useUserStore = defineStore('user', () => {
     userInfo.value = null
     localStorage.removeItem('token')
     localStorage.removeItem('userInfo')
+    socketService.disconnect()
   }
 
   async function fetchUserInfo() {
@@ -64,6 +68,12 @@ export const useUserStore = defineStore('user', () => {
     { immediate: true }
   )
 
+  function initSocketOnStartup() {
+    if (token.value && !socketService.isConnected()) {
+      socketService.connect(token.value)
+    }
+  }
+
   return {
     token,
     userInfo,
@@ -72,6 +82,7 @@ export const useUserStore = defineStore('user', () => {
     setToken,
     setUserInfo,
     logout,
-    fetchUserInfo
+    fetchUserInfo,
+    initSocketOnStartup
   }
 })

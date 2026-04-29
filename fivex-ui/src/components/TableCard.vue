@@ -1,5 +1,5 @@
 <template>
-  <div class="table-card" @click="handleClick">
+  <div class="table-card" @click="handleClick" :data-table-number="table.number">
     <div class="slot left-slot">
       <div class="avatar-wrapper">
         <svg class="avatar-svg" viewBox="0 0 36 36" width="36" height="36">
@@ -11,9 +11,9 @@
             class="avatar-border"
             :class="{ dashed: !table.player1, solid: table.player1 }"
           />
-          <g class="avatar-icon" :class="{ faint: !table.player1 }" transform="translate(10, 8)">
+          <g class="avatar-icon" :class="{ faint: !table.player1, active: table.player1 }" transform="translate(10, 8)">
             <path d="M8 8c1.8 0 3.2-1.4 3.2-3.2S9.8 1.6 8 1.6 4.8 3 4.8 4.8 6.2 8 8 8zm0 1.6c-2.1 0-6.4 1.1-6.4 3.2v1.6h12.8V12.8c0-2.1-4.3-3.2-6.4-3.2z" 
-              :fill="table.player1 ? '#A09080' : '#D0C5B5'"/>
+              :fill="table.player1 ? 'var(--accent)' : '#D0C5B5'"/>
           </g>
         </svg>
       </div>
@@ -41,9 +41,9 @@
             class="avatar-border"
             :class="{ dashed: !table.player2, solid: table.player2 }"
           />
-          <g class="avatar-icon" :class="{ faint: !table.player2 }" transform="translate(10, 8)">
+          <g class="avatar-icon" :class="{ faint: !table.player2, active: table.player2 }" transform="translate(10, 8)">
             <path d="M8 8c1.8 0 3.2-1.4 3.2-3.2S9.8 1.6 8 1.6 4.8 3 4.8 4.8 6.2 8 8 8zm0 1.6c-2.1 0-6.4 1.1-6.4 3.2v1.6h12.8V12.8c0-2.1-4.3-3.2-6.4-3.2z" 
-              :fill="table.player2 ? '#A09080' : '#D0C5B5'"/>
+              :fill="table.player2 ? 'var(--accent)' : '#D0C5B5'"/>
           </g>
         </svg>
       </div>
@@ -129,7 +129,7 @@ const handleClick = () => {
 }
 
 .avatar-border.solid {
-  stroke: #C8BFB0;
+  stroke: var(--accent);
   stroke-dasharray: none;
 }
 

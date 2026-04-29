@@ -6,7 +6,7 @@
     </header>
     <main class="body-wrap">
       <aside class="lobby-left">
-        <RegionList />
+        <RegionList v-model="currentRegion" />
       </aside>
       <section class="lobby-center">
         <TableGrid :currentRegion="currentRegion" />
