@@ -33,6 +33,7 @@ app.use('/api', (req, res, next) => {
 app.use('/api/test', require('./routes/test'));
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/lobby', require('./routes/lobby'));
+app.use('/api/regions', require('./routes/region'));
 
 const io = new Server(server, {
   cors: {

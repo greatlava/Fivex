@@ -8,7 +8,7 @@ const roomSchema = new mongoose.Schema({
   region: {
     type: String,
     required: true,
-    default: '华东一区'
+    default: 'HD1'
   },
   status: {
     type: String,

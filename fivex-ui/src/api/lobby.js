@@ -1,11 +1,11 @@
 import { apiClient } from './auth'
 
 const lobbyApi = {
-  getRooms: (region = '华东一区') => {
+  getRooms: (region = 'HD1') => {
     return apiClient.get(`/lobby/rooms?region=${encodeURIComponent(region)}`)
   },
 
-  getRoom: (roomNumber, region = '华东一区') => {
+  getRoom: (roomNumber, region = 'HD1') => {
     return apiClient.get(`/lobby/rooms/${roomNumber}?region=${encodeURIComponent(region)}`)
   },
 
@@ -13,15 +13,15 @@ const lobbyApi = {
     return apiClient.get('/lobby/online-players')
   },
 
-  sitDown: (roomNumber, region = '华东一区') => {
+  sitDown: (roomNumber, region = 'HD1') => {
     return apiClient.post('/lobby/sit-down', { roomNumber, region })
   },
 
-  leaveRoom: (region = '华东一区') => {
+  leaveRoom: (region = 'HD1') => {
     return apiClient.post('/lobby/leave-room', { region })
   },
 
-  quickStart: (region = '华东一区') => {
+  quickStart: (region = 'HD1') => {
     return apiClient.post('/lobby/quick-start', { region })
   }
 }

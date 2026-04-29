@@ -48,7 +48,7 @@ const createVirtualRoom = (roomNumber, region) => {
 };
 
 const roomService = {
-  async getRooms(region = '华东一区') {
+  async getRooms(region = 'HD1') {
     try {
       return await tableRedisService.getTables(region);
     } catch (error) {
@@ -78,7 +78,7 @@ const roomService = {
     }
   },
   
-  async getRoomByNumber(roomNumber, region = '华东一区') {
+  async getRoomByNumber(roomNumber, region = 'HD1') {
     try {
       if (roomNumber < 1 || roomNumber > TOTAL_TABLES) {
         return null;
@@ -150,7 +150,7 @@ const roomService = {
     };
   },
   
-  async sitDown(userId, roomNumber, region = '华东一区') {
+  async sitDown(userId, roomNumber, region = 'HD1') {
     try {
       if (roomNumber < 1 || roomNumber > TOTAL_TABLES) {
         return { success: false, message: '桌位号无效' };
@@ -243,7 +243,7 @@ const roomService = {
     }
   },
   
-  async leaveRoom(userId, region = '华东一区') {
+  async leaveRoom(userId, region = 'HD1') {
     try {
       const currentTableInfo = await tableRedisService.getPlayerCurrentTable(userId);
       
@@ -328,7 +328,7 @@ const roomService = {
     }
   },
   
-  async quickStart(userId, region = '华东一区') {
+  async quickStart(userId, region = 'HD1') {
     try {
       const currentTableInfo = await tableRedisService.getPlayerCurrentTable(userId);
       

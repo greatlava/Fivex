@@ -6,7 +6,7 @@
         <svg class="sep-icon" viewBox="0 0 12 12" width="12" height="12">
           <path d="M4 2 L8 6 L4 10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
-        <span>{{ currentRegion }}</span>
+        <span>{{ currentRegionName }}</span>
       </div>
       <div class="topbar-right">
         <div class="user-info" v-if="userStore.isAuthenticated && userStore.userInfo">
@@ -60,7 +60,11 @@ import lobbyApi from '@/api/lobby'
 const props = defineProps({
   currentRegion: {
     type: String,
-    default: '华东一区'
+    default: 'HD1'
+  },
+  currentRegionName: {
+    type: String,
+    default: ''
   }
 })
 
