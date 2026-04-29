@@ -31,8 +31,8 @@ const regions = ref([])
 const fetchRegions = async () => {
   try {
     const response = await regionApi.getRegions()
-    if (response.data.success && response.data.data?.regions) {
-      regions.value = response.data.data.regions
+    if (response.success && response.data?.regions) {
+      regions.value = response.data.regions
       emit('update:regions', regions.value)
     }
   } catch (error) {
