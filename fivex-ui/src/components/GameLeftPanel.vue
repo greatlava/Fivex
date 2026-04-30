@@ -3,8 +3,8 @@
     <div class="panel-section self-section" :class="{ active: isMyTurn }">
       <div class="section-header">
         <span class="section-title">你</span>
-        <span class="color-indicator" :class="myColor">
-          {{ myColor === 'black' ? '黑方' : '白方' }}
+        <span class="color-indicator" :class="myColorActual">
+          {{ myColorActual === 'black' ? '黑方' : '白方' }}
         </span>
       </div>
       
@@ -150,8 +150,26 @@ const userStore = useUserStore()
 
 const defaultAvatar = avatars[0]
 
+const myColorActual = computed(() => {
+  if (props.myColor === 'black' || props.myColor === 'white') {
+    return props.myColor
+  }
+  
+  if (userStore.userInfo) {
+    const userId = String(userStore.userInfo.id)
+    if (props.player1 && String(props.player1.id) === userId) {
+      return 'black'
+    }
+    if (props.player2 && String(props.player2.id) === userId) {
+      return 'white'
+    }
+  }
+  
+  return 'black'
+})
+
 const opponentColor = computed(() => {
-  return props.myColor === 'black' ? 'white' : 'black'
+  return myColorActual.value === 'black' ? 'white' : 'black'
 })
 
 const isMyTurn = computed(() => {
@@ -163,14 +181,14 @@ const isTimeLow = computed(() => {
 })
 
 const selfPlayer = computed(() => {
-  if (props.myColor === 'black') {
+  if (myColorActual.value === 'black') {
     return props.player1
   }
   return props.player2
 })
 
 const opponentPlayer = computed(() => {
-  if (props.myColor === 'black') {
+  if (myColorActual.value === 'black') {
     return props.player2
   }
   return props.player1
@@ -215,7 +233,7 @@ const opponentPlayerAvatar = computed(() => {
 })
 
 const selfScore = computed(() => {
-  if (props.myColor === 'black') {
+  if (myColorActual.value === 'black') {
     return gameStore.currentScore.player1
   }
   return gameStore.currentScore.player2
