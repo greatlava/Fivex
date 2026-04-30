@@ -9,16 +9,16 @@
       </div>
       
       <div class="player-card">
-        <div class="player-avatar" :style="myAvatar.style">
-          <svg :viewBox="myAvatar.svgData.viewBox" class="avatar-svg">
+        <div class="player-avatar" :style="selfPlayerAvatar.style">
+          <svg :viewBox="selfPlayerAvatar.svgData.viewBox" class="avatar-svg">
             <defs>
-              <linearGradient v-if="myAvatar.svgData.gradient" id="grad-me" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" :style="'stop-color:' + myAvatar.svgData.gradient.start" />
-                <stop offset="100%" :style="'stop-color:' + myAvatar.svgData.gradient.end" />
+              <linearGradient v-if="selfPlayerAvatar.svgData.gradient" id="grad-me" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" :style="'stop-color:' + selfPlayerAvatar.svgData.gradient.start" />
+                <stop offset="100%" :style="'stop-color:' + selfPlayerAvatar.svgData.gradient.end" />
               </linearGradient>
             </defs>
             <path
-              v-for="(path, index) in myAvatar.svgData.paths"
+              v-for="(path, index) in selfPlayerAvatar.svgData.paths"
               :key="index"
               :d="path.d"
               :fill="path.fill || 'url(#grad-me)'"
@@ -26,7 +26,7 @@
               :stroke-width="path.strokeWidth || 0"
             />
             <circle
-              v-for="(circle, index) in myAvatar.svgData.circles"
+              v-for="(circle, index) in selfPlayerAvatar.svgData.circles"
               :key="'circle-me-' + index"
               :cx="circle.cx"
               :cy="circle.cy"
@@ -38,7 +38,7 @@
         </div>
         
         <div class="player-info">
-          <div class="player-name">{{ myName }}</div>
+          <div class="player-name">{{ selfPlayerName }}</div>
           <div class="timer-display" :class="{ warning: isTimeLow }">
             <svg viewBox="0 0 24 24" width="16" height="16" class="timer-icon">
               <path d="M12 2C6.5 2 2 6.5 2 12S6.5 22 12 22 22 17.5 22 12 17.5 2 12 2ZM12 20C7.6 20 4 16.4 4 12S7.6 4 12 4 20 7.6 20 12 16.4 20 12 20ZM12.5 7H11V13L16.2 16.1L17 14.9L12.5 12.2V7Z" 
@@ -51,13 +51,13 @@
       
       <div class="score-display">
         <span class="score-label">比分</span>
-        <span class="score-value">{{ myScore }}</span>
+        <span class="score-value">{{ selfScore }}</span>
       </div>
     </div>
 
     <div class="panel-divider"></div>
 
-    <div class="panel-section opponent-section" :class="{ active: !isMyTurn && gameStore.hasBothPlayers }">
+    <div class="panel-section opponent-section" :class="{ active: !isMyTurn && hasOpponent }">
       <div class="section-header">
         <span class="section-title">对手</span>
         <span class="color-indicator" :class="opponentColor">
@@ -66,16 +66,16 @@
       </div>
       
       <div class="player-card">
-        <div class="player-avatar" :style="opponentAvatar.style">
-          <svg v-if="opponentName" :viewBox="opponentAvatar.svgData.viewBox" class="avatar-svg">
+        <div class="player-avatar" :style="opponentPlayerAvatar.style">
+          <svg v-if="hasOpponent" :viewBox="opponentPlayerAvatar.svgData.viewBox" class="avatar-svg">
             <defs>
-              <linearGradient v-if="opponentAvatar.svgData.gradient" id="grad-opp" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" :style="'stop-color:' + opponentAvatar.svgData.gradient.start" />
-                <stop offset="100%" :style="'stop-color:' + opponentAvatar.svgData.gradient.end" />
+              <linearGradient v-if="opponentPlayerAvatar.svgData.gradient" id="grad-opp" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" :style="'stop-color:' + opponentPlayerAvatar.svgData.gradient.start" />
+                <stop offset="100%" :style="'stop-color:' + opponentPlayerAvatar.svgData.gradient.end" />
               </linearGradient>
             </defs>
             <path
-              v-for="(path, index) in opponentAvatar.svgData.paths"
+              v-for="(path, index) in opponentPlayerAvatar.svgData.paths"
               :key="index"
               :d="path.d"
               :fill="path.fill || 'url(#grad-opp)'"
@@ -83,7 +83,7 @@
               :stroke-width="path.strokeWidth || 0"
             />
             <circle
-              v-for="(circle, index) in opponentAvatar.svgData.circles"
+              v-for="(circle, index) in opponentPlayerAvatar.svgData.circles"
               :key="'circle-opp-' + index"
               :cx="circle.cx"
               :cy="circle.cy"
@@ -101,13 +101,13 @@
         </div>
         
         <div class="player-info">
-          <div class="player-name">{{ opponentName || '等待对手...' }}</div>
+          <div class="player-name">{{ opponentPlayerName || '等待对手...' }}</div>
           <div class="timer-display" :class="{ warning: isTimeLow }">
             <svg viewBox="0 0 24 24" width="16" height="16" class="timer-icon">
               <path d="M12 2C6.5 2 2 6.5 2 12S6.5 22 12 22 22 17.5 22 12 17.5 2 12 2ZM12 20C7.6 20 4 16.4 4 12S7.6 4 12 4 20 7.6 20 12 16.4 20 12 20ZM12.5 7H11V13L16.2 16.1L17 14.9L12.5 12.2V7Z" 
                 fill="currentColor"/>
             </svg>
-            <span class="timer-value">{{ opponentName ? gameStore.formattedTime : '--:--' }}</span>
+            <span class="timer-value">{{ hasOpponent ? gameStore.formattedTime : '--:--' }}</span>
           </div>
         </div>
       </div>
@@ -126,17 +126,32 @@ import { useGameStore } from '@/stores/game'
 import { useUserStore } from '@/stores/user'
 import { getAvatarById, avatars } from '@/config/avatars'
 
+const props = defineProps({
+  player1: {
+    type: Object,
+    default: null
+  },
+  player2: {
+    type: Object,
+    default: null
+  },
+  myColor: {
+    type: String,
+    default: 'black'
+  },
+  isGameStarted: {
+    type: Boolean,
+    default: false
+  }
+})
+
 const gameStore = useGameStore()
 const userStore = useUserStore()
 
 const defaultAvatar = avatars[0]
 
-const myColor = computed(() => {
-  return gameStore.playerColor || 'black'
-})
-
 const opponentColor = computed(() => {
-  return myColor.value === 'black' ? 'white' : 'black'
+  return props.myColor === 'black' ? 'white' : 'black'
 })
 
 const isMyTurn = computed(() => {
@@ -147,33 +162,63 @@ const isTimeLow = computed(() => {
   return gameStore.timerRemaining < 60
 })
 
-const myName = computed(() => {
+const selfPlayer = computed(() => {
+  if (props.myColor === 'black') {
+    return props.player1
+  }
+  return props.player2
+})
+
+const opponentPlayer = computed(() => {
+  if (props.myColor === 'black') {
+    return props.player2
+  }
+  return props.player1
+})
+
+const hasOpponent = computed(() => {
+  return !!opponentPlayer.value
+})
+
+const selfPlayerName = computed(() => {
+  if (selfPlayer.value && selfPlayer.value.name) {
+    return selfPlayer.value.name
+  }
   if (userStore.userInfo) {
     return userStore.userInfo.nickname || userStore.userInfo.username || '玩家'
   }
   return '玩家'
 })
 
-const myAvatar = computed(() => {
+const selfPlayerAvatar = computed(() => {
+  if (selfPlayer.value && selfPlayer.value.avatar) {
+    return getAvatarById(selfPlayer.value.avatar)
+  }
   if (userStore.userInfo && userStore.userInfo.avatar) {
     return getAvatarById(userStore.userInfo.avatar)
   }
   return defaultAvatar
 })
 
-const myScore = computed(() => {
-  if (myColor.value === 'black') {
-    return gameStore.currentScore.player1
+const opponentPlayerName = computed(() => {
+  if (opponentPlayer.value && opponentPlayer.value.name) {
+    return opponentPlayer.value.name
   }
-  return gameStore.currentScore.player2
-})
-
-const opponentName = computed(() => {
   return null
 })
 
-const opponentAvatar = computed(() => {
+const opponentPlayerAvatar = computed(() => {
+  if (opponentPlayer.value && opponentPlayer.value.avatar) {
+    return getAvatarById(opponentPlayer.value.avatar)
+  }
   return defaultAvatar
+})
+
+const selfScore = computed(() => {
+  if (props.myColor === 'black') {
+    return gameStore.currentScore.player1
+  }
+  return gameStore.currentScore.player2
 })
 
 const opponentScore = computed(() => {

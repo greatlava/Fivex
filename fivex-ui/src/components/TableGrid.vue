@@ -209,7 +209,10 @@ const sitDown = async (table) => {
       
       router.push({
         name: 'Game',
-        params: { tableNumber: table.number }
+        params: { 
+          region: props.currentRegion,
+          tableNumber: table.number 
+        }
       })
     } else {
       console.error('坐下失败:', result.message)

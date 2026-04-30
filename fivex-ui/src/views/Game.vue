@@ -10,7 +10,7 @@
         </button>
       </div>
       <div class="header-center">
-        <span class="room-info">桌号 {{ tableNumber }} · {{ region }}</span>
+        <span class="room-info">{{ regionName }} · 桌号 {{ tableNumber }}</span>
       </div>
       <div class="header-right">
         <span class="game-status">{{ gameStatusText }}</span>
@@ -19,12 +19,21 @@
 
     <main class="game-main">
       <aside class="game-left">
-        <GameLeftPanel />
+        <GameLeftPanel 
+          :player1="roomInfo.player1" 
+          :player2="roomInfo.player2"
+          :myColor="gameStore.playerColor"
+          :isGameStarted="isGameStarted"
+        />
       </aside>
 
       <section class="game-center">
         <div class="board-container">
-          <GameBoard v-if="isBoardReady" @move="handleMove" />
+          <GameBoard 
+            v-if="isBoardReady" 
+            @move="handleMove"
+            :isGameStarted="isGameStarted"
+          />
           <div v-else class="board-loading">
             <span>棋盘加载中...</span>
           </div>
@@ -75,9 +84,13 @@ import GameBoard from '@/components/GameBoard.vue'
 import lobbyApi from '@/api/lobby'
 
 const props = defineProps({
+  region: {
+    type: String,
+    required: true
+  },
   tableNumber: {
     type: [String, Number],
-    default: null
+    required: true
   }
 })
 
@@ -86,9 +99,24 @@ const route = useRoute()
 const gameStore = useGameStore()
 const userStore = useUserStore()
 
-const region = ref('HD1')
+const regionName = computed(() => {
+  const regionMap = {
+    'HD1': '华北一区',
+    'HD2': '华北二区',
+    'HD3': '华北三区'
+  }
+  return regionMap[props.region] || props.region
+})
+
 const isBoardReady = ref(false)
 const gameStatus = ref('waiting')
+const isGameStarted = ref(false)
+const roomInfo = ref({
+  player1: null,
+  player2: null
+})
+
+let refreshInterval = null
 
 const gameStatusText = computed(() => {
   switch (gameStatus.value) {
@@ -106,7 +134,7 @@ const gameStatusText = computed(() => {
 })
 
 const canStart = computed(() => {
-  return gameStatus.value === 'ready' && gameStore.hasBothPlayers
+  return gameStatus.value === 'ready' && gameStore.hasBothPlayers && !isGameStarted.value
 })
 
 const canUndo = computed(() => {
@@ -123,7 +151,8 @@ const handleBack = () => {
 
 const handleStart = () => {
   gameStatus.value = 'playing'
-  gameStore.resetGame()
+  isGameStarted.value = true
+  gameStore.currentTurn = 'black'
   console.log('游戏开始')
 }
 
@@ -198,24 +227,34 @@ const checkWin = (row, col, board) => {
 }
 
 const fetchRoomInfo = async () => {
-  if (!props.tableNumber) return
+  if (!props.tableNumber || !props.region) return
   
   try {
-    const result = await lobbyApi.getRoom(props.tableNumber, region.value)
+    const result = await lobbyApi.getRoom(props.tableNumber, props.region)
     if (result.success && result.data) {
       const room = result.data
       gameStore.roomId = room.id
       
+      roomInfo.value.player1 = room.player1
+      roomInfo.value.player2 = room.player2
+      
       if (room.player1 && room.player2) {
         gameStore.hasBothPlayers = true
-        gameStatus.value = 'ready'
+        if (!isGameStarted.value) {
+          gameStatus.value = 'ready'
+        }
         
         if (userStore.userInfo) {
-          if (room.player1.id === userStore.userInfo.id) {
+          if (room.player1 && room.player1.id === userStore.userInfo.id) {
             gameStore.playerColor = 'black'
-          } else if (room.player2.id === userStore.userInfo.id) {
+          } else if (room.player2 && room.player2.id === userStore.userInfo.id) {
             gameStore.playerColor = 'white'
           }
+        }
+      } else {
+        gameStore.hasBothPlayers = false
+        if (!isGameStarted.value) {
+          gameStatus.value = 'waiting'
         }
       }
     }
@@ -227,16 +266,24 @@ const fetchRoomInfo = async () => {
 onMounted(() => {
   fetchRoomInfo()
   
+  refreshInterval = setInterval(() => {
+    fetchRoomInfo()
+  }, 2000)
+  
   setTimeout(() => {
     isBoardReady.value = true
   }, 500)
 })
 
 onUnmounted(() => {
+  if (refreshInterval) {
+    clearInterval(refreshInterval)
+    refreshInterval = null
+  }
 })
 
 watch(
-  () => route.params.tableNumber,
+  () => [route.params.region, route.params.tableNumber],
   () => {
     fetchRoomInfo()
   }
