@@ -230,36 +230,60 @@ const fetchRoomInfo = async () => {
   if (!props.tableNumber || !props.region) return
   
   try {
+    console.log('[Game] 正在获取房间信息...', {
+      region: props.region,
+      tableNumber: props.tableNumber
+    })
+    
     const result = await lobbyApi.getRoom(props.tableNumber, props.region)
+    
     if (result.success && result.data) {
       const room = result.data
+      
+      console.log('[Game] 房间信息:', {
+        roomId: room.id,
+        player1: room.player1,
+        player2: room.player2,
+        userInfoId: userStore.userInfo?.id
+      })
+      
       gameStore.roomId = room.id
       
-      roomInfo.value.player1 = room.player1
-      roomInfo.value.player2 = room.player2
+      roomInfo.value = {
+        player1: room.player1,
+        player2: room.player2
+      }
+      
+      if (userStore.userInfo) {
+        const userId = String(userStore.userInfo.id)
+        
+        if (room.player1 && String(room.player1.id) === userId) {
+          console.log('[Game] 当前用户是 player1 (黑方)')
+          gameStore.playerColor = 'black'
+        } else if (room.player2 && String(room.player2.id) === userId) {
+          console.log('[Game] 当前用户是 player2 (白方)')
+          gameStore.playerColor = 'white'
+        }
+      }
       
       if (room.player1 && room.player2) {
+        console.log('[Game] 两个玩家都已进入房间')
         gameStore.hasBothPlayers = true
+        
         if (!isGameStarted.value) {
           gameStatus.value = 'ready'
         }
-        
-        if (userStore.userInfo) {
-          if (room.player1 && room.player1.id === userStore.userInfo.id) {
-            gameStore.playerColor = 'black'
-          } else if (room.player2 && room.player2.id === userStore.userInfo.id) {
-            gameStore.playerColor = 'white'
-          }
-        }
       } else {
+        console.log('[Game] 等待对手进入...')
         gameStore.hasBothPlayers = false
+        
         if (!isGameStarted.value) {
           gameStatus.value = 'waiting'
         }
       }
     }
   } catch (error) {
-    console.error('获取房间信息失败:', error)
+    console.error('[Game] 获取房间信息失败:', error)
   }
 }
 
