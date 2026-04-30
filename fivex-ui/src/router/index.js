@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import Lobby from '../views/Lobby.vue'
+import Game from '../views/Game.vue'
 import TestPage from '../views/Test.vue'
 
 const routes = [
@@ -11,6 +12,12 @@ const routes = [
     path: '/lobby',
     name: 'Lobby',
     component: Lobby
+  },
+  {
+    path: '/game/:tableNumber?',
+    name: 'Game',
+    component: Game,
+    props: true
   },
   {
     path: '/test',
