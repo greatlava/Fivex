@@ -14,7 +14,7 @@ const routes = [
     component: Lobby
   },
   {
-    path: '/game/:tableNumber?',
+    path: '/game/:region/:tableNumber',
     name: 'Game',
     component: Game,
     props: true

@@ -13,6 +13,10 @@ const props = defineProps({
   size: {
     type: Number,
     default: 560
+  },
+  isGameStarted: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -114,7 +118,10 @@ const setupInteraction = () => {
 }
 
 const handlePointerMove = (event) => {
-  if (gameStore.isGameOver) return
+  if (!props.isGameStarted || gameStore.isGameOver) {
+    hideHoverIndicator()
+    return
+  }
 
   const pos = event.global
   const row = Math.round((pos.y - padding.value) / cellSize.value)
@@ -138,7 +145,7 @@ const handlePointerOut = () => {
 }
 
 const handlePointerClick = (event) => {
-  if (gameStore.isGameOver || !gameStore.isMyTurn) return
+  if (!props.isGameStarted || gameStore.isGameOver || !gameStore.isMyTurn) return
 
   const pos = event.global
   const row = Math.round((pos.y - padding.value) / cellSize.value)
