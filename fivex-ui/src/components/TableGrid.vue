@@ -51,7 +51,9 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
+import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
+import { useGameStore } from '@/stores/game'
 import TableCard from './TableCard.vue'
 import AuthModal from './AuthModal.vue'
 import authApi from '@/api/auth'
@@ -68,7 +70,9 @@ const props = defineProps({
   }
 })
 
+const router = useRouter()
 const userStore = useUserStore()
+const gameStore = useGameStore()
 
 const tables = ref([])
 const showAuthModal = ref(false)
@@ -187,10 +191,26 @@ const sitDown = async (table) => {
     const result = await lobbyApi.sitDown(table.number, props.currentRegion)
     if (result.success) {
       console.log('坐下成功:', result.data)
-      await fetchRooms()
+      
       if (result.data.room) {
-        scrollToTable(result.data.room.number)
+        gameStore.resetGame()
+        gameStore.roomId = result.data.room.id
+        
+        if (result.data.slot === 'player1') {
+          gameStore.playerColor = 'black'
+        } else if (result.data.slot === 'player2') {
+          gameStore.playerColor = 'white'
+        }
+        
+        if (result.data.room.player1 && result.data.room.player2) {
+          gameStore.hasBothPlayers = true
+        }
       }
+      
+      router.push({
+        name: 'Game',
+        params: { tableNumber: table.number }
+      })
     } else {
       console.error('坐下失败:', result.message)
     }
